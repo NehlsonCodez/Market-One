@@ -1,14 +1,27 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
-class Users(BaseModel):
-    id : int
+class UserBase(BaseModel):
+    firstname : str
+    lastname: str
     username : str
-    email : str
-    password : str
+    email : EmailStr
     phone : str
 
 
-class UsersResponse(BaseModel):
+class UsersResponse(UserBase):
     id : int
-    username: str
+
+    class Config:
+        from_attribute = True
     
+
+class UserCreate(UserBase):
+    password : str = Field(min_length=6)
+    confirm_password: str
+
+    @field_validator("confirm_password")
+    def passwords_match(cls, value, info):
+        password = info.data.get("password")
+        if password and value != password:
+            raise ValueError("passwords do not match!")
+        return value
