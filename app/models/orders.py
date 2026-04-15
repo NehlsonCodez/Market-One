@@ -14,3 +14,4 @@ class Order(Base):
     order_status = Column(String(30))
 
     user = relationship('User', back_populates='orders')
+    items = relationship('OrderItem', back_populates='order')

@@ -5,7 +5,7 @@ from datetime import datetime
 from database.database import Base
 
 class Product(Base):
-    __tablename__ = "Products"
+    __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String(100), nullable=False)
@@ -16,3 +16,4 @@ class Product(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     category = relationship('Category', back_populates='products')
+    order_items = relationship('OrderItem', back_populates='product')

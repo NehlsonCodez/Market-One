@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.sqlite import *
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.ext import declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./market.db"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": "false"})
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
-session = sessionmaker(auto_commit = False, autoflush = False, bind = engine)
+session = sessionmaker(autocommit = False, autoflush = False, bind = engine)
 
 Base = declarative_base()

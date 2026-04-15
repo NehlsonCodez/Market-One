@@ -9,6 +9,6 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String(100), nullable=False)
-    description = Column(Text, nullabe=False)
+    description = Column(Text, nullable=False)
 
     products = relationship('Product', back_populates='category')

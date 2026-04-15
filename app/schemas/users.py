@@ -5,7 +5,7 @@ class UserBase(BaseModel):
     lastname: str
     username : str
     email : EmailStr
-    phone : str
+    phone_number : str
 
 
 class UsersResponse(UserBase):
@@ -16,7 +16,7 @@ class UsersResponse(UserBase):
 
 class UserCreate(UserBase):
     password : str = Field(min_length=6)
-    confirm_password: str
+    confirm_password: str = Field(min_length=6)
 
     @field_validator("confirm_password")
     def passwords_match(cls, value, info):
@@ -24,3 +24,7 @@ class UserCreate(UserBase):
         if password and value != password:
             raise ValueError("passwords do not match!")
         return value
+    
+class UserLogin(BaseModel):
+    username: str 
+    password: str = Field(min_length=6)

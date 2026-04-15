@@ -9,7 +9,6 @@ asyncpg
 databases
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
 python-multipart
 email-validator
 python-dotenv
