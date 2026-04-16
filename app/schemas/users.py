@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr, field_validator, ConfigDict
+from typing import Optional
 
 class UserBase(BaseModel):
     firstname : str
@@ -15,6 +16,7 @@ class UsersResponse(UserBase):
     
 
 class UserCreate(UserBase):
+    role: Optional[str]
     password : str = Field(min_length=6)
     confirm_password: str = Field(min_length=6)
 

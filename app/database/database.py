@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.sqlite import *
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./market.db"
