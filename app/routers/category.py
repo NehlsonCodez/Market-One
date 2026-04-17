@@ -31,8 +31,17 @@ async def get_category(id:int, db: Session = Depends(get_db), current_user = Dep
 
 @router.put("/update_category/{id:int}")
 async def update_category(id:int, category_data: CategoryCreate, db:Session = Depends(get_db), current_user = Depends(get_current_user)):
+    
+    if current_user.role != "admin":
+        raise HTTPException(status_code=401, detail="Admin only")
+    
     return update_category_by_id(id, category_data, db)
 
 @router.delete("/delete_category/{id:int}")
 async def delete_category(id:int, db:Session = Depends(get_db), current_user = Depends(get_current_user)):
+    
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    
     return delete_category_by_id(id, db)
