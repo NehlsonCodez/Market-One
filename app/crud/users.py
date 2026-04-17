@@ -28,11 +28,10 @@ def create_user(user_data:dict, db:Session):
 
 #Login User
 def login_user(user_data: dict, db:Session):
-    data = user_data.model_dump()
-    db_user = db.query(User).filter(User.username == data.username).first()
+    db_user = db.query(User).filter(User.username == user_data.username).first()
 
-    if not db_user and verify_password(data.password, db_user.password):
+    if not db_user and verify_password(user_data.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid Credential")
     
     token = create_access_token(data={"sub":db_user.id, "role":db_user.role})
-    return {"Message" : "Login Successfull"}
+    return {"access_toke": token, "token_type" : "Bearer"}
