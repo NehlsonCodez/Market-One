@@ -14,8 +14,8 @@ def get_user_by_username(db:Session, username:str):
     return db.query(User).filter(User.username == username)
 
 #Create User
-def create_user(db:Session, user_data:dict):
-    data = user_data
+def create_user(user_data:dict, db:Session):
+    data = user_data.model_dump()
     data.pop("confirm_password")
 
     data["password"] = hash_password(data["password"])
@@ -27,8 +27,8 @@ def create_user(db:Session, user_data:dict):
     return new_user
 
 #Login User
-def login_user(db:Session, user_data):
-    data = user_data
+def login_user(user_data: dict, db:Session):
+    data = user_data.model_dump()
     db_user = db.query(User).filter(User.username == data.username).first()
 
     if not db_user and verify_password(data.password, db_user.password):
