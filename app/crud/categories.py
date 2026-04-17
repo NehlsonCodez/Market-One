@@ -20,8 +20,24 @@ def get_category_by_id(id:int, db:Session):
 
     return db.query(Category).filter(Category.id == id).first()
 
-def update_category():
-    pass
+def update_category_by_id(id:int, category_data:dict, db:Session):
+    db_category = db.query(Category).filter(Category.id == id).first()
 
-def delete_category():
-    pass
+    if not db_category:
+        raise HTTPException(status_code=401, detail="Category not found")
+    
+    db_category.name = category_data.name
+    db_category.description = category_data.description
+
+    db.commit()
+    return db_category
+
+
+def delete_category_by_id(id:int, db:Session):
+    try:
+        db.query(Category).filter(Category.id == id).delete()
+        db.commit()
+    except Exception as e:
+        raise Exception(e)
+    
+    return {"delete": "successful"}
