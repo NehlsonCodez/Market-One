@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from crud import get_user_by_id
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login_user")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def get_db():
     db = session()

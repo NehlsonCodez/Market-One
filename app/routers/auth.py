@@ -3,6 +3,7 @@ from schemas import UsersResponse, UserCreate, UserLogin
 from dependencies import get_db
 from sqlalchemy.orm import Session
 from crud import create_user, login_user
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -13,6 +14,6 @@ async def signup(user: UserCreate, db: Session = Depends(get_db) ):
     
     
 @router.post("/login")
-async def login(user: UserLogin, db: Session =Depends(get_db)):
+async def login(form_data: OAuth2PasswordRequestForm=Depends() , db: Session =Depends(get_db)):
     
-    return login_user(user,db)
+    return login_user(form_data, db)
