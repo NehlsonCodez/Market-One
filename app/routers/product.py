@@ -19,6 +19,7 @@ async def create_product(product: ProductCreate,
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+    return new_product
 
 
 @router.get("/get_products")

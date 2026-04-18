@@ -5,6 +5,7 @@ class ProductBase(BaseModel):
     name : str
     description : str
     price : Decimal
+    category_id : int
     stock_quantity: int
 
 
