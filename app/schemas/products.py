@@ -17,3 +17,6 @@ class ProductResponse(ProductBase):
 
     model_config = ConfigDict(from_attribute=True)
 
+
+class ProductUpdate(ProductBase):
+    pass
