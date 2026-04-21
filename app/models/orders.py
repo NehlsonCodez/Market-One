@@ -9,9 +9,10 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    order_number = Column(String, unique=True, nullable=False)
     order_date = Column(DateTime, default = datetime.utcnow, nullable=False)
     total_amount = Column(Numeric(12,2), nullable=False)
-    order_status = Column(String(30))
+    order_status = Column(String(30), default="Pending", nullable=False)
 
     user = relationship('User', back_populates='orders')
-    items = relationship('OrderItem', back_populates='order')
+    items = relationship('OrderItem', back_populates='order', cascade="all, delete-orphan")

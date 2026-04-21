@@ -1,12 +1,15 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List
+from decimal import Decimal
 
 class OrderItemBase(BaseModel):
     product_id: int
     quantity: int
-    price:int
 
 class OrderItemResponse(OrderItemBase):
-    id: int
+    id : int
+    product_id : int
+    quantity : int
+    price_at_purchased :Decimal
+    total_amount: Decimal
 
     model_config = ConfigDict(from_attribute=True)

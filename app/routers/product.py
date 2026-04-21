@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from dependencies import get_db, get_current_user
-from schemas import ProductCreate, ProductResponse
+from schemas import ProductCreate, ProductResponse, ProductUpdate
 from sqlalchemy.orm import Session
 from crud import product_create, update_product_by_id, get_product_by_id, get_all_products, delete_product_by_id
 
@@ -26,7 +26,7 @@ async def get_product(id:int, db: Session = Depends(get_db), current_user=Depend
     return get_product_by_id(id, db)
 
 @router.put("/update_product/{id:int}")
-async def update_product(id:int, product_data, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
+async def update_product(id:int, product_data:ProductUpdate, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
     
     if current_user.role != "admin":
         raise HTTPException(status_code=401, detail="Admin Only")
