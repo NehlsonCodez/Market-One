@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from database.database import Base, engine
-from routers import auth_router, product_router, order_router, category_router
+from routers import auth_router, product_router, order_router, category_router, cart_router
 app = FastAPI(title="Market-One API")
 
 @app.on_event("startup")
@@ -10,6 +10,7 @@ def on_startup():
 
 app.include_router(auth_router)
 app.include_router(product_router)
+app.include_router(cart_router)
 app.include_router(order_router)
 app.include_router(category_router)
 

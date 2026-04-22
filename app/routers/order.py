@@ -10,7 +10,6 @@ router = APIRouter(prefix="/order", tags=["order"])
 @router.post("/create_order", response_model=OrderResponse)
 def create_order(order_data: OrderCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
-    print("Start...")
     order_number = generate_unique_order_number(db)
 
     print(order_number)
@@ -25,9 +24,8 @@ def create_order(order_data: OrderCreate, db: Session = Depends(get_db), current
     total = 0
     
     for item in order_data.items:
-        print("start")
         product = db.query(Product).filter(Product.id == item.product_id).first()
-        print("line1 confirm")
+    
         if not product:
             raise HTTPException(status_code=404, detail="product not found!")
         

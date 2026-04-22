@@ -10,7 +10,7 @@ class CategoryCreate(CategoryBase):
 class CategoryResponse(CategoryBase):
     id : int
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 

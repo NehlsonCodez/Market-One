@@ -12,4 +12,4 @@ class OrderItemResponse(OrderItemBase):
     price_at_purchased :Decimal
     total_amount: Decimal
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)

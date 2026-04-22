@@ -15,7 +15,7 @@ class ProductCreate(ProductBase):
 class ProductResponse(ProductBase):
     int
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProductUpdate(ProductBase):

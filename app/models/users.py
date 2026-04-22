@@ -18,6 +18,8 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     orders = relationship('Order', back_populates='user', cascade="all, delete-orphan")
+    cart = relationship("Cart", back_populates="user")
+    
 
 
 
