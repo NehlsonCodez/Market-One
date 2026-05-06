@@ -1,18 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
-from models import Order, OrderItem, Product
+from models import Order, OrderItem, Product, Cart, CartItem
 from utils import generate_unique_order_number
 from schemas import OrderCreate, OrderResponse, OrderStatus
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from dependencies import get_db, get_current_user
 
 router = APIRouter(prefix="/order", tags=["order"])
 
 @router.post("/create_order", response_model=OrderResponse)
-def create_order(order_data: OrderCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def create_order(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
+    cart = db.query(Cart).options(selectinload(Cart.items)).filter(Cart.user_id == current_user.id).first()
+
+    if not cart:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+
     order_number = generate_unique_order_number(db)
 
-    print(order_number)
+    
     new_order = Order(user_id = current_user.id,
                       order_number = order_number,
                       total_amount = 0)
@@ -23,8 +29,8 @@ def create_order(order_data: OrderCreate, db: Session = Depends(get_db), current
 
     total = 0
     
-    for item in order_data.items:
-        product = db.query(Product).filter(Product.id == item.product_id).first()
+    for item in cart.items:
+        product = item.product
     
         if not product:
             raise HTTPException(status_code=404, detail="product not found!")
@@ -42,6 +48,10 @@ def create_order(order_data: OrderCreate, db: Session = Depends(get_db), current
         total += total_amount
         
     new_order.total_amount = total
+
+    for item in cart.items:
+        db.delete(item)
+
     db.commit()
     db.refresh(new_order)
 

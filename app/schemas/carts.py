@@ -8,3 +8,4 @@ class CartResponse(BaseModel):
     items : List[CartItemResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
