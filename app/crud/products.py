@@ -1,9 +1,14 @@
-from fastapi import Depends
-from models import Product
+from fastapi import Depends, HTTPException
+from models import Product, Category
 from sqlalchemy.orm import Session
 
 
 def product_create(product : dict, db:Session):
+
+    category = db.query(Category).filter(Category.id == product.category_id).first()
+
+    if not category:
+        raise HTTPException(status_code=404, detail="category not found!")
 
     new_product = Product(**product.model_dump())
     db.add(new_product)

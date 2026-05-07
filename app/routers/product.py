@@ -39,4 +39,5 @@ async def delete_product(id:int, db:Session=Depends(get_db), current_user = Depe
     if current_user.role != "admin":
         raise HTTPException(status_code=401, detail="Admin Only")
     
+    
     return delete_product_by_id(id, db)

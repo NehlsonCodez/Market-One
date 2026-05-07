@@ -1,97 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException
 from models import Order, OrderItem, Product, Cart, CartItem
 from utils import generate_unique_order_number
-from schemas import OrderCreate, OrderResponse, OrderStatus
+from schemas import OrderResponse, OrderStatus
 from sqlalchemy.orm import Session, selectinload
 from dependencies import get_db, get_current_user
+from crud import order_create, get_order_by_id, get_all_orders, update_order_status_by_id, delete_order_by_id
 
 router = APIRouter(prefix="/order", tags=["order"])
 
 @router.post("/create_order", response_model=OrderResponse)
 def create_order(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    
-    cart = db.query(Cart).options(selectinload(Cart.items)).filter(Cart.user_id == current_user.id).first()
-
-    if not cart:
-        raise HTTPException(status_code=400, detail="Cart is empty")
-    
-
-    order_number = generate_unique_order_number(db)
-
-    
-    new_order = Order(user_id = current_user.id,
-                      order_number = order_number,
-                      total_amount = 0)
-    print(new_order)
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-
-    total = 0
-    
-    for item in cart.items:
-        product = item.product
-    
-        if not product:
-            raise HTTPException(status_code=404, detail="product not found!")
-        
-        price = product.price
-        total_amount = price * item.quantity
-
-        order_item = OrderItem(order_id = new_order.id,
-                               product_id = product.id,
-                               quantity = item.quantity,
-                               price_at_purchased = price,
-                               total_amount = total_amount)
-        db.add(order_item)
-
-        total += total_amount
-        
-    new_order.total_amount = total
-
-    for item in cart.items:
-        db.delete(item)
-
-    db.commit()
-    db.refresh(new_order)
-
-    return new_order
+    return order_create(db, current_user)
 
 @router.get("/get_orders")
 async def get_orders(db:Session=Depends(get_db), current_user = Depends(get_current_user)):
-    return db.query(Order).filter(Order.user_id == current_user.id).all()
+    return get_all_orders(db, current_user)
 
 @router.get("/get_order/{id:int}")
 async def get_order(id:int, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
-    order = db.query(Order).filter(Order.id==id).first()
+    return get_order_by_id(id, db, current_user)
+
+@router.post("/order/{order_id}/pay")
+async def initiate_payment(order_id:int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    order = db.query(Order).filter(Order.id == order_id).first()
 
     if not order:
-        raise HTTPException(status_code=404, detail='order not found!')
+        raise HTTPException(status_code=404, detail="order not found")
     
-    if order.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not allowed")
+    if order.order_status != "pending":
+        raise HTTPException(status_code=400, detail="Order has already been paid for or Cancelled")
     
-    return order
+    
+
 
 @router.put("/update_order/{order_id:int}") #Admin only
 async def update_order_status(order_id:int, order_status:OrderStatus, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
     
     if current_user.role != "admin":
         raise HTTPException(status_code=401, detail="Admin only")
-    
-    order = db.query(Order).filter(Order.id == order_id).first()
 
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    
-    order.order_status = order_status
-    db.commit()
-    db.refresh(order)
-    
-    return {"Message":"Order updated successfully"}
+    return update_order_status_by_id(order_id, order_status, db)
 
 @router.delete("/delete_order/{id}")
 async def delete_order(id:int, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
-    db.query(Order).filter(Order.id==id).delete()
-    db.commit()
-    return {"Message": "Deleted Successfully"}
+    
+    return delete_order_by_id(id, db)
