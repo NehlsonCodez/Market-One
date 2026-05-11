@@ -17,7 +17,8 @@ def order_create(db: Session, current_user:dict):
                         total_amount = 0)
     
     db.add(new_order)
-
+    db.flush()
+    
     total = 0
 
     for item in cart.items:

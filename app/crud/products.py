@@ -10,6 +10,11 @@ def product_create(product : dict, db:Session):
     if not category:
         raise HTTPException(status_code=404, detail="category not found!")
 
+    if product.price <= 0:
+        raise HTTPException(status_code=401, detail="price must be greater than 0")
+
+    if product.stock_quantity <= 0:
+        raise HTTPException(status_code=401, detail="quantity must be greater than 0")
     new_product = Product(**product.model_dump())
     db.add(new_product)
     db.commit()
@@ -31,7 +36,7 @@ def update_product_by_id(id:int, product_data: dict, db:Session):
     db_product.stock_quantity = product_data.stock_quantity
     db.commit()
 
-    return db_product
+    return {"message": "updated successfully"}
 
 def delete_product_by_id(id:int, db:Session):
     

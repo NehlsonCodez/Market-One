@@ -19,6 +19,7 @@ class User(Base):
 
     orders = relationship('Order', back_populates='user', cascade="all, delete-orphan")
     cart = relationship("Cart", back_populates="user")
+    payments = relationship("Payment", back_populates="user")
     
 
 
