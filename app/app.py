@@ -4,8 +4,9 @@ from routers import auth_router, product_router, order_router, category_router, 
 app = FastAPI(title="Market-One API")
 
 @app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 
 app.include_router(auth_router)

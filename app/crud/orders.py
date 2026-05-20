@@ -1,58 +1,69 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from models import Cart, Order, OrderItem
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils import generate_unique_order_number
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
 
-def order_create(db: Session, current_user:dict):
+async def order_create(db: AsyncSession, current_user:dict):
 
-    cart = db.query(Cart).options(selectinload(Cart.items)).filter(Cart.id == current_user.id).first()
-
-    if not cart:
-        raise HTTPException(status_code=400, detail="cart is empty")
-    
-    order_number = generate_unique_order_number(db)
-
-    new_order = Order(user_id = current_user.id,
-                        order_number = order_number,
-                        total_amount = 0)
-    
-    db.add(new_order)
-    db.flush()
-    
-    total = 0
-
-    for item in cart.items:
-        product = item.product
-
-        if not product:
-            raise HTTPException(status_code=404, detail="product not found!")
+    try:
+        result = await db.execute(select(Cart).where(Cart.id == current_user.id)).options(selectinload(Cart.items))
         
-        price = product.price
-        total_amount = price * item.quantity
+        cart = result.scalar_one_or_none()
 
-        order_item = OrderItem(order_id = new_order.id,
-                               product_id = product.id,
-                               quantity = item.quantity,
-                               price_at_purchased = price,
-                               total_amount = total_amount )
+        if not cart:
+            raise HTTPException(status_code=400, detail="cart is empty")
         
-        db.add(order_item)
+        order_number = generate_unique_order_number(db)
 
-        total += total_amount
+        new_order = Order(user_id = current_user.id,
+                            order_number = order_number,
+                            total_amount = 0)
+        
+        db.add(new_order)
+        await db.flush()
+        
+        total = 0
 
-    new_order.total_amount = total
+        for item in cart.items:
+            product = item.product
 
-    for item in cart.items:
-        db.delete(item)
+            if not product:
+                raise HTTPException(status_code=404, detail="product not found!")
+            
+            price = product.price
+            total_amount = price * item.quantity
 
-    db.commit()
-    db.refresh(new_order)
+            order_item = OrderItem(order_id = new_order.id,
+                                product_id = product.id,
+                                quantity = item.quantity,
+                                price_at_purchased = price,
+                                total_amount = total_amount )
+            
+            db.add(order_item)
 
-    return new_order
+            total += total_amount
+
+        new_order.total_amount = total
+
+        for item in cart.items:
+            await db.delete(item)
+
+        await db.commit()
+        await db.refresh(new_order)
+
+        return new_order
+    except Exception:
+        await db.rollback()
+        raise
+
+
+async def get_order_by_id(id:int, db:AsyncSession, current_user:dict):
     
-def get_order_by_id(id:int, db:Session, current_user:dict):
-    
-    order = db.query(Order).filter(Order.id == id).first()
+    result = await db.execute(select(Order).where(Order.id == id))
+
+    order = result.scalar_one_or_none()
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -62,26 +73,50 @@ def get_order_by_id(id:int, db:Session, current_user:dict):
     
     return order
 
-def get_all_orders(db:Session, current_user:dict):
-    orders = db.query(Order).filter(Order.user_id == current_user.id).all()
+async def get_all_orders(db:AsyncSession, current_user:dict):
+    
+    result = await db.execute(select(Order).where(Order.user_id == current_user.id))
+
+    orders = result.scalars().all()
+
+    if not orders:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
+
 
     return orders
 
-def update_order_status_by_id(id:int, data:dict, db: Session):
+async def update_order_status_by_id(id:int, data:dict, db: AsyncSession):
 
-    order = db.query(Order).filter(Order.id == id).first()
+    try:
+        result = await db.execute(select(Order).where(Order.id == id))
 
-    order.order_status = data
+        order = result.scalar_one_or_none()
 
-    db.commit()
-    db.refresh(order)
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
 
-    return {"Message":"Order updated successfully"}
+        order.order_status = data
 
-def delete_order_by_id(id, db:Session):
+        await db.commit()
+        await db.refresh(order)
 
-    order = db.query(Order).filter(Order.id == id).first()
+        return {"Message":"Order updated successfully"}
+    
+    except Exception:
+        await db.rollback()
+        raise
 
-    db.delete(order)
-    db.commit()
-    return {"message": "deleted successfully"}
+async def delete_order_by_id(id:int, db:AsyncSession):
+
+    try:
+        result = await db.execute(delete(Order).where(Order.id == id))
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
+        
+        await db.commit()
+        return {"message": "deleted successfully"}
+    
+    except Exception:
+        await db.rollback()
+        raise

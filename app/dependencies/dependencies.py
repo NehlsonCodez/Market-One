@@ -1,23 +1,20 @@
-from database import session
+from database import AsyncSessionLocal
 from core import SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
 from crud import get_user_by_id
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def get_db():
-    db = session()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
 
 
-def get_current_user(token:str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_user(token:str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     credential_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -34,7 +31,7 @@ def get_current_user(token:str = Depends(oauth2_scheme), db: Session = Depends(g
     except JWTError:
         raise credential_exception
     
-    user = get_user_by_id(db, user_id)
+    user = await get_user_by_id(db, user_id)
 
     if user is None:
         raise credential_exception

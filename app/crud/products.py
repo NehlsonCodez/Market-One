@@ -1,11 +1,14 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from models import Product, Category
-from sqlalchemy.orm import Session
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def product_create(product : dict, db:Session):
+async def product_create(product : dict, db:AsyncSession):
 
-    category = db.query(Category).filter(Category.id == product.category_id).first()
+    result = await db.execute(select(Category).where(Category.id == product.category_id))
+
+    category = result.scalar_one_or_none()
 
     if not category:
         raise HTTPException(status_code=404, detail="category not found!")
@@ -17,33 +20,65 @@ def product_create(product : dict, db:Session):
         raise HTTPException(status_code=401, detail="quantity must be greater than 0")
     new_product = Product(**product.model_dump())
     db.add(new_product)
-    db.commit()
-    db.refresh(new_product)
+    await db.commit()
+    await db.refresh(new_product)
     return new_product
 
-def get_all_products(db:Session):
-    return db.query(Product).all()
+async def get_all_products(db:AsyncSession):
+    result = await db.execute(select(Product))
+    products = result.scalars().all()
+    return products
 
-def get_product_by_id(id:int, db:Session):
-    return db.query(Product).filter(Product.id == id).first()
+async def get_product_by_id(id:int, db:AsyncSession):
+    result = await db.execute(select(Product).where(Product.id == id))
 
-def update_product_by_id(id:int, product_data: dict, db:Session):
-    db_product = db.query(Product).filter(Product.id == id).first()
-    db_product.name = product_data.name
-    db_product.description = product_data.description
-    db_product.price = product_data.price
-    db_product.category_id = product_data.category_id
-    db_product.stock_quantity = product_data.stock_quantity
-    db.commit()
+    product = result.scalar_one_or_none()
 
-    return {"message": "updated successfully"}
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="product not found")
+    
+    return product
 
-def delete_product_by_id(id:int, db:Session):
+async def update_product_by_id(id:int, product_data: dict, db:AsyncSession):
+    try:
+        result = await db.execute(select(Product).where(Product.id == id))
+
+        db_product = result.scalar_one_or_none()
+
+        if not db_product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="product not found")
+        
+        db_product.name = product_data.name
+        db_product.description = product_data.description
+        db_product.price = product_data.price
+        db_product.category_id = product_data.category_id
+        db_product.stock_quantity = product_data.stock_quantity
+
+        await db.commit()
+
+        return {"message": "updated successfully"}
+    
+    except Exception:
+        await db.rollback()
+        raise
+
+
+
+async def delete_product_by_id(id:int, db:AsyncSession):
     
     try:
-        db.query(Product).filter(Product.id  == id).delete()
-        db.commit()
+        result = await db.execute(delete(Product).where(Product.id  == id))
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "product not found!")
+        
+
+        await db.commit()
+        
+        return {"Message": "Product deleted successfully"}
+        
     except Exception as e:
-        raise Exception(e)
+        await db.rollback()
+        raise
     
-    return {"Message": "Product deleted successfully"}
+    

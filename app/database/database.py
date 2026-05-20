@@ -1,12 +1,19 @@
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.dialects.sqlite import *
+from core import DATABASE_URL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./market.db"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
-session = sessionmaker(autocommit = False, autoflush = False, bind = engine)
+engine = create_async_engine(DATABASE_URL,
+                             echo = True,
+                             future= True)
+
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_ = AsyncSession,
+    expire_on_commit= False,
+    autoflush= False)
 
 Base = declarative_base()

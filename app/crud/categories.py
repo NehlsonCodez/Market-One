@@ -1,43 +1,83 @@
-from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
+from fastapi import HTTPException, status
 from models import Category
 
-def category_create(data: dict, db:Session):
+async def category_create(data: dict, db:AsyncSession):
 
-    new_category = Category(**data.model_dump())
+    try:
+        result = await db.execute(select(Category).where(Category.name == data.name))
+        category_exist = result.scalar_one_or_none()
 
-    db.add(new_category)
-    db.commit()
-    db.refresh(new_category)
+        if category_exist:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="category already exist")
 
-    return new_category
+        new_category = Category(**data.model_dump())
 
-def get_all_categories(db:Session):
+        db.add(new_category)
+        await db.commit()
+        await db.refresh(new_category)
+
+        return new_category
+    except Exception:
+        await db.rollback()
+        raise
+
+async def get_all_categories(db:AsyncSession):
     
-    return db.query(Category).all()
+    result = await db.execute(select(Category))
+    db_categories = result.scalar().all()
+    if not db_categories:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="category not found")
+    
+    return db_categories
 
-def get_category_by_id(id:int, db:Session):
+async def get_category_by_id(id:int, db:AsyncSession):
 
-    return db.query(Category).filter(Category.id == id).first()
 
-def update_category_by_id(id:int, category_data:dict, db:Session):
-    db_category = db.query(Category).filter(Category.id == id).first()
-
+    result = await db.execute(select(Category).where(Category.id == id))
+    
+    db_category = result.scalar_one_or_none()
+    
     if not db_category:
-        raise HTTPException(status_code=401, detail="Category not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="category not found")
     
-    db_category.name = category_data.name
-    db_category.description = category_data.description
-
-    db.commit()
     return db_category
 
-
-def delete_category_by_id(id:int, db:Session):
-    try:
-        db.query(Category).filter(Category.id == id).delete()
-        db.commit()
-    except Exception as e:
-        raise Exception(e)
+async def update_category_by_id(id:int, category_data:dict, db:AsyncSession):
     
-    return {"delete": "successful"}
+    try:
+    
+        result = await db.execute(select(Category).where(Category.id == id))
+
+        db_category = result.scalar_one_or_none()
+
+        if not db_category:
+            raise HTTPException(status_code=401, detail="Category not found")
+        
+        db_category.name = category_data.name
+        db_category.description = category_data.description
+
+        await db.commit()
+        return db_category
+    
+    except Exception:
+        await db.rollback()
+        raise
+
+
+async def delete_category_by_id(id:int, db:AsyncSession):
+    try:
+        result = await db.execute(delete(Category).where(Category.id == id))
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="category not found")
+        
+        db.commit()
+
+        return {"delete": "successful"}
+    except Exception as e:
+        await db.rollback()
+        raise
+    
+    
