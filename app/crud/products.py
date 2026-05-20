@@ -6,23 +6,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def product_create(product : dict, db:AsyncSession):
 
-    result = await db.execute(select(Category).where(Category.id == product.category_id))
+    try:
+        result = await db.execute(select(Category).where(Category.id == product.category_id))
 
-    category = result.scalar_one_or_none()
+        category = result.scalar_one_or_none()
 
-    if not category:
-        raise HTTPException(status_code=404, detail="category not found!")
+        if not category:
+            raise HTTPException(status_code=404, detail="category not found!")
 
-    if product.price <= 0:
-        raise HTTPException(status_code=401, detail="price must be greater than 0")
+        if product.price <= 0:
+            raise HTTPException(status_code=401, detail="price must be greater than 0")
 
-    if product.stock_quantity <= 0:
-        raise HTTPException(status_code=401, detail="quantity must be greater than 0")
-    new_product = Product(**product.model_dump())
-    db.add(new_product)
-    await db.commit()
-    await db.refresh(new_product)
-    return new_product
+        if product.stock_quantity <= 0:
+            raise HTTPException(status_code=401, detail="quantity must be greater than 0")
+        new_product = Product(**product.model_dump())
+        db.add(new_product)
+
+        await db.commit()
+        await db.refresh(new_product)
+        
+        return new_product
+    except Exception:
+        await db.rollback()
+        raise
 
 async def get_all_products(db:AsyncSession):
     result = await db.execute(select(Product))

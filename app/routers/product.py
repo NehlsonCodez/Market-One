@@ -14,16 +14,16 @@ async def create_product(product: ProductCreate,
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Admin Only")
     
-    return product_create(product, db)
+    return await product_create(product, db)
 
 
 @router.get("/get_products")
 async def get_products(db: Session = Depends(get_db), current_user =Depends(get_current_user)):
-    return get_all_products(db)
+    return await get_all_products(db)
 
 @router.get("/get_product/{id:int}")
 async def get_product(id:int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    return get_product_by_id(id, db)
+    return await get_product_by_id(id, db)
 
 @router.put("/update_product/{id:int}")
 async def update_product(id:int, product_data:ProductUpdate, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
@@ -31,7 +31,7 @@ async def update_product(id:int, product_data:ProductUpdate, db:Session=Depends(
     if current_user.role != "admin":
         raise HTTPException(status_code=401, detail="Admin Only")
     
-    return update_product_by_id(id, product_data, db)
+    return await update_product_by_id(id, product_data, db)
     
 @router.delete("/delete_product/{id:int}")
 async def delete_product(id:int, db:Session=Depends(get_db), current_user = Depends(get_current_user)):
@@ -40,4 +40,4 @@ async def delete_product(id:int, db:Session=Depends(get_db), current_user = Depe
         raise HTTPException(status_code=401, detail="Admin Only")
     
     
-    return delete_product_by_id(id, db)
+    return await delete_product_by_id(id, db)

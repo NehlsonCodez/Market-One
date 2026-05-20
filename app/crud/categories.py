@@ -26,7 +26,7 @@ async def category_create(data: dict, db:AsyncSession):
 async def get_all_categories(db:AsyncSession):
     
     result = await db.execute(select(Category))
-    db_categories = result.scalar().all()
+    db_categories = result.scalars().all()
     if not db_categories:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="category not found")
     
