@@ -73,12 +73,16 @@ async def update_product_by_id(id:int, product_data: dict, db:AsyncSession):
 async def delete_product_by_id(id:int, db:AsyncSession):
     
     try:
-        result = await db.execute(delete(Product).where(Product.id  == id))
+        result = await db.execute(select(Product).where(Product.id  == id))
         
-        if result.rowcount == 0:
+        print(result)
+        
+        product = result.scalar_one_or_none()
+
+        if not product:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "product not found!")
         
-
+        await db.delete(product)
         await db.commit()
         
         return {"Message": "Product deleted successfully"}

@@ -9,7 +9,7 @@ class OrderItem(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    product_id = Column(Integer, ForeignKey('products.id', ondelete="RESTRICT"), nullable=False)
     quantity = Column(Integer, nullable=False)
     price_at_purchased = Column(Numeric(10,2), nullable=False)
 

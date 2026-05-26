@@ -23,6 +23,7 @@ async def get_user_by_username(db:AsyncSession, username:str):
     result = await db.execute(select(User).where(User.username == username))
 
     user = result.scalar_one_or_none()
+
     if not user:
         raise HTTPException(status_code=404, detail="user not found")
     
@@ -31,28 +32,37 @@ async def get_user_by_username(db:AsyncSession, username:str):
 #Create User
 async def create_user(user_data:dict, db:AsyncSession):
 
-    result = await db.execute(select(User).where(User.username == user_data.username))
+    try:
+        result = await db.execute(select(User).where(User.username == user_data.username))
 
-    user_exist = result.scalar_one_or_none()
+        user_exist = result.scalar_one_or_none()
 
-    if user_exist:
-        raise HTTPException(status_code=400, detail="Username is already taken")
+        if user_exist:
+            raise HTTPException(status_code=400, detail="Username is already taken")
 
-    data = user_data.model_dump()
-    data.pop("confirm_password")
+        data = user_data.model_dump()
+        data.pop("confirm_password")
 
-    data["password"] = hash_password(data["password"])
+        data["password"] = hash_password(data["password"])
 
-    new_user = User(**data)
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    return new_user
+        new_user = User(**data)
+
+        db.add(new_user)
+
+        await db.commit()
+        await db.refresh(new_user)
+
+        return new_user
+
+    except Exception:
+        await db.rollback()
+        raise
 
 #Login User
 async def login_user(form_data:OAuth2PasswordRequestForm, db:AsyncSession):
     
     result = await db.execute(select(User).where(User.username == form_data.username))
+
 
     db_user = result.scalar_one_or_none()
 

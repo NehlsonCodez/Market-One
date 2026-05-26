@@ -134,7 +134,8 @@ async def paystack_webhook(request: Request, db:AsyncSession=Depends(get_db)):
 
         data = event["data"]
         reference = data["reference"]
-        payment = db.query(Payment).filter(Payment.reference == reference).first()
+        result = await db.execute(select(Payment).where(Payment.reference == reference))
+        payment = result.scalar_one_or_none()
 
         if payment:
 
@@ -146,7 +147,8 @@ async def paystack_webhook(request: Request, db:AsyncSession=Depends(get_db)):
 
                 payment.transaction_id = str(data.get("id"))
 
-                order = db.query(Order).filter(Order.id == payment.order_id).first()
+                result = await db.execute(select(Order).where(Order.id == payment.order_id))
+                order = result.scalar_one_or_none()
 
                 if order:
                     order.status = "paid"

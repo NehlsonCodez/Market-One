@@ -68,12 +68,14 @@ async def update_category_by_id(id:int, category_data:dict, db:AsyncSession):
 
 async def delete_category_by_id(id:int, db:AsyncSession):
     try:
-        result = await db.execute(delete(Category).where(Category.id == id))
+        result = await db.execute(select(Category).where(Category.id == id))
 
-        if result.rowcount == 0:
+        category = result.scalar_one_or_none()
+        if not category:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="category not found")
         
-        db.commit()
+        await db.delete(category)
+        await db.commit()
 
         return {"delete": "successful"}
     except Exception as e:

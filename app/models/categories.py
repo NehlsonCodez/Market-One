@@ -11,4 +11,4 @@ class Category(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
 
-    products = relationship('Product', back_populates='category')
+    products = relationship('Product', back_populates='category', cascade="all, delete-orphan")
