@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from dependencies import get_db, get_current_user
 from schemas import ProductCreate, ProductResponse, ProductUpdate
 from sqlalchemy.orm import Session
+from typing import List
 from crud import product_create, update_product_by_id, get_product_by_id, get_all_products, delete_product_by_id
 
 router = APIRouter(prefix="/product", tags=["product"])
 
 @router.post("/create_product", response_model=ProductResponse)
-async def create_product(product: ProductCreate, 
+async def create_product(product: ProductCreate,
+                         images: List[UploadFile] = File(..., min_items=1),
                          db: Session = Depends(get_db), 
                          current_user = Depends(get_current_user)):
 

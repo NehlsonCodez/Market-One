@@ -13,6 +13,7 @@ class Product(Base):
     price = Column(Numeric(10,2), nullable=False)
     stock_quantity = Column(Integer, nullable=False)
     category_id = Column(Integer, ForeignKey('categories.id',  ondelete="CASCADE"), nullable=False)
+    product_photo_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     category = relationship('Category', back_populates='products')

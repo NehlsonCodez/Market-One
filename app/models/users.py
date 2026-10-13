@@ -14,6 +14,7 @@ class User(Base):
     role = Column(String(30), default="customer", nullable=False)
     password=Column(String(255), nullable=False)
     phone_number = Column(String(20), nullable = True)
+    profile_picture = Column(String, nullable=True)
     isactive = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

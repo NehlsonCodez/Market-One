@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
+from typing import Optional
 
 class ProductBase(BaseModel):
     name : str
